@@ -21,7 +21,9 @@ class BlogHandler(webapp2.RequestHandler):
         """
 
         # TODO - filter the query so that only posts by the given user
-        return None
+        query = Post.all().filter("author",user).order("-created")
+        user_posts = query.fetch(limit=limit, offset=offset)
+        return user_posts
 
     def get_user_by_name(self, username):
         """ Get a user object from the db, based on their username """
@@ -117,10 +119,10 @@ class BlogIndexHandler(BlogHandler):
 
 class NewPostHandler(BlogHandler):
 
-    def render_form(self, title="", body="", error=""):
+    def render_form(self, title="", body="", author="", error=""):
         """ Render the new post form with or without an error, based on parameters """
         t = jinja_env.get_template("newpost.html")
-        response = t.render(title=title, body=body, error=error)
+        response = t.render(title=title, body=body, author=author, error=error)
         self.response.out.write(response)
 
     def get(self):
@@ -130,6 +132,7 @@ class NewPostHandler(BlogHandler):
         """ Create a new blog post if possible. Otherwise, return with an error message """
         title = self.request.get("title")
         body = self.request.get("body")
+        author = self.request.get("author")
 
         if title and body:
 
@@ -189,7 +192,7 @@ class SignupHandler(BlogHandler):
         if not email:
             return ""
 
-        EMAIL_RE = re.compile(r"^[\S]+@[\S]+.[\S]+$")
+        EMAIL_RE = re.compile(r"^[\S]+@[\S]+\.[\S]+$")
         if EMAIL_RE.match(email):
             return email
 
